@@ -1,0 +1,8 @@
+services:
+  web:
+    image: nginx:alpine
+    environment:
+      - NGINX_ENV=production
+
+  redis:
+    image: redis:alpine
