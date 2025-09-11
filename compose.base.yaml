@@ -1,8 +1,7 @@
 services:
   app:
     image: node:18-alpine
-    working_dir: /app
-    command: npm start
+    command: node -e "console.log('App running'); setInterval(() => {}, 1000)"
     environment:
       - NODE_ENV=production
 
