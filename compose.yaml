@@ -1,18 +1,182 @@
 services:
-  web:
+  # Test case 1: No user and volume mounts - should work without permission issues
+  no-user-with-volumes:
     image: nginx:alpine
-    depends_on:
-      - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1"]
-      interval: 1s
-      timeout: 1s
-      retries: 10
+    volumes:
+      - ./volume_sources/no-user:/usr/share/nginx/html
 
-  redis:
-    image: redis:alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 1s
-      timeout: 1s
-      retries: 10
+  # Test case 2: Root user and volume mounts - should work without permission issues
+  root-user-with-volumes:
+    image: nginx:alpine
+    user: "0"
+    volumes:
+      - ./volume_sources/root-user:/usr/share/nginx/html
+
+  # Test case 3: Non-root user and volume mounts - should fix permissions using helper container
+  nonroot-user-with-volumes:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/nonroot-user:/usr/share/nginx/html
+
+  # Test case 4: Image that defaults to non-root user and volume mounts - should fix permissions
+  image-defaults-nonroot:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+    volumes:
+      - ./volume_sources/postgres-data:/var/lib/postgresql/data
+
+  # Test case 5: Image that prohibits root user and volume mounts - should fix permissions
+  opensearch-nonroot:
+    image: opensearchproject/opensearch:2.11.1
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=TestPassword123!
+    volumes:
+      - ./volume_sources/opensearch-data:/usr/share/opensearch/data
+
+  # Test case 6: No volume mounts - should skip volume initialization step
+  no-volumes:
+    image: nginx:alpine
+
+  # Test case 7: No user and build context - should work without permission issues
+  build-no-user:
+    build:
+      context: ./build_contexts/basic
+    volumes:
+      - ./volume_sources/build-no-user:/data
+
+  # Test case 8: Root user and build context - should work without permission issues
+  build-root-user:
+    build:
+      context: ./build_contexts/basic
+    user: "root"
+    volumes:
+      - ./volume_sources/build-root:/data
+
+  # Test case 9: Non-root user and build context - should fix permissions using helper container
+  build-nonroot-user:
+    build:
+      context: ./build_contexts/basic
+    user: "1000"
+    volumes:
+      - ./volume_sources/build-nonroot:/data
+
+  # Test case 10: Both build context and image, no user, and volume mounts - should work without permission issues
+  both-build-image-no-user:
+    build:
+      context: ./build_contexts/basic
+    image: test-volume-build-no-user
+    volumes:
+      - ./volume_sources/both-no-user:/data
+
+  # Test case 11: Both build context and image, root user, and volume mounts - should work without permission issues
+  both-build-image-root:
+    build:
+      context: ./build_contexts/basic
+    image: test-volume-build-root
+    user: "0"
+    volumes:
+      - ./volume_sources/both-root:/data
+
+  # Test case 12: Both build context and image, non-root user, and volume mounts - should fix permissions
+  both-build-image-nonroot:
+    build:
+      context: ./build_contexts/basic
+    image: test-volume-build-nonroot
+    user: "1000"
+    volumes:
+      - ./volume_sources/both-nonroot:/data
+
+  # Test case 13: Both build context and image, image defaults to non-root user, and volume mounts - should fix permissions
+  both-build-image-defaults:
+    build:
+      context: ./build_contexts/with-user
+    image: test-volume-build-defaults
+    volumes:
+      - ./volume_sources/both-defaults:/data
+
+  # Test case 14: Named volumes only - should fix permissions using helper container
+  named-volumes-only:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - test-named-volume:/usr/share/nginx/html
+
+  # Test case 15: Bind mounts only - should fix permissions using helper container
+  bind-mounts-only:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/bind-only:/usr/share/nginx/html
+
+  # Test case 16: Mixed volume types (bind + named) - should fix permissions using helper container
+  mixed-volumes:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/mixed-bind:/usr/share/nginx/html
+      - test-mixed-volume:/var/cache/nginx
+
+  # Test case 17: File bind mounts (existing files) - should create parent directory and fix permissions
+  file-bind-mount-existing:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/config/existing-nginx.conf:/etc/nginx/nginx.conf
+      - ./volume_sources/logs/existing-access.log:/var/log/nginx/access.log
+
+  # Test case 18: File bind mounts (non-existing files) - should create parent directory and fix permissions
+  file-bind-mount-nonexisting:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/config/new-nginx.conf:/etc/nginx/conf.d/new.conf
+      - ./volume_sources/logs/new-error.log:/var/log/nginx/error.log
+
+  # Test case 19: Directory bind mounts - should create directory and fix permissions
+  directory-bind-mount:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/html-dir:/usr/share/nginx/html
+      - ./volume_sources/logs-dir:/var/log/nginx
+
+  # Test case 20: Multiple volumes per service - should fix permissions for all volumes
+  multiple-volumes:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/multi-1:/usr/share/nginx/html
+      - ./volume_sources/multi-2:/var/cache/nginx
+      - ./volume_sources/multi-3:/var/log/nginx
+      - test-multi-named:/tmp/multi
+
+  # Test case 21: User:group format - should fix permissions using both UID and GID
+  user-group-format:
+    image: nginx:alpine
+    user: "1000:1000"
+    volumes:
+      - ./volume_sources/user-group:/usr/share/nginx/html
+
+  # Test case 22: Numeric user IDs - should fix permissions using numeric UID
+  numeric-user:
+    image: nginx:alpine
+    user: "1001"
+    volumes:
+      - ./volume_sources/numeric-user:/usr/share/nginx/html
+
+  # Test case 23: Complex volume paths - should handle nested directory creation
+  complex-paths:
+    image: nginx:alpine
+    user: "1000"
+    volumes:
+      - ./volume_sources/complex/nested/deep/path:/usr/share/nginx/html
+      - ./volume_sources/another/complex/structure/file.conf:/etc/nginx/conf.d/custom.conf
+
+# TODO: Make sure to clean up named volumes after tests
+volumes:
+  test-named-volume:
+  test-mixed-volume:
+  test-multi-named:

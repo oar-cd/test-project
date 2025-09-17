@@ -1,0 +1,5 @@
+# Existing nginx access log file for testing
+# This file exists before deployment to test file bind mount handling
+
+127.0.0.1 - - [01/Jan/2024:00:00:00 +0000] "GET / HTTP/1.1" 200 612 "-" "Test"
+127.0.0.1 - - [01/Jan/2024:00:00:01 +0000] "GET /test HTTP/1.1" 404 153 "-" "Test"
