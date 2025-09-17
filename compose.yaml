@@ -68,6 +68,7 @@ services:
     build:
       context: ./build_contexts/basic
     image: test-volume-build-no-user
+    pull_policy: build
     volumes:
       - ./volume_sources/both-no-user:/data
 
@@ -76,6 +77,7 @@ services:
     build:
       context: ./build_contexts/basic
     image: test-volume-build-root
+    pull_policy: build
     user: "0"
     volumes:
       - ./volume_sources/both-root:/data
@@ -85,6 +87,7 @@ services:
     build:
       context: ./build_contexts/basic
     image: test-volume-build-nonroot
+    pull_policy: build
     user: "1000"
     volumes:
       - ./volume_sources/both-nonroot:/data
@@ -94,6 +97,7 @@ services:
     build:
       context: ./build_contexts/with-user
     image: test-volume-build-defaults
+    pull_policy: build
     volumes:
       - ./volume_sources/both-defaults:/data
 
