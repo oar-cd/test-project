@@ -1,27 +1,28 @@
-# https://hub.docker.com/_/nginx#running-nginx-in-read-only-mode
-
 services:
   # Test case 1: No user and volume mounts - should work without permission issues
   no-user-with-volumes:
-    image: nginx:alpine
+    image: alpine:latest
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; sleep 10; done"
     volumes:
-      - ./volume_sources/no-user:/usr/share/nginx/html
+      - ./volume_sources/no-user:/data
 
   # Test case 2: Root user and volume mounts - should work without permission issues
   root-user-with-volumes:
-    image: nginx:alpine
+    image: alpine:latest
     user: "0"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; sleep 10; done"
     volumes:
-      - ./volume_sources/root-user:/usr/share/nginx/html
+      - ./volume_sources/root-user:/data
 
   # Test case 3: Non-root user and volume mounts - should fix permissions using helper container
   nonroot-user-with-volumes:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/nonroot-user:/usr/share/nginx/html
-      - ./volume_sources/nonroot-cache:/var/cache/nginx
-      - ./volume_sources/nonroot-run:/var/run
+      - ./volume_sources/nonroot-user:/data
+      - ./volume_sources/nonroot-cache:/cache
+      - ./volume_sources/nonroot-run:/run
 
   # Test case 4: Image that defaults to non-root user and volume mounts - should fix permissions
   image-defaults-nonroot:
@@ -42,7 +43,8 @@ services:
 
   # Test case 6: No volume mounts - should skip volume initialization step
   no-volumes:
-    image: nginx:alpine
+    image: alpine:latest
+    command: sh -c "while true; do echo 'App running...'; sleep 10; done"
 
   # Test case 7: No user and build context - should work without permission issues
   build-no-user:
@@ -107,99 +109,109 @@ services:
 
   # Test case 14: Named volumes only - should fix permissions using helper container
   named-volumes-only:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - test-named-volume:/usr/share/nginx/html
-      - test-named-cache:/var/cache/nginx
-      - test-named-run:/var/run
+      - test-named-volume:/data
+      - test-named-cache:/cache
+      - test-named-run:/run
 
   # Test case 15: Bind mounts only - should fix permissions using helper container
   bind-mounts-only:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/bind-only:/usr/share/nginx/html
-      - ./volume_sources/bind-cache:/var/cache/nginx
-      - ./volume_sources/bind-run:/var/run
+      - ./volume_sources/bind-only:/data
+      - ./volume_sources/bind-cache:/cache
+      - ./volume_sources/bind-run:/run
 
   # Test case 16: Mixed volume types (bind + named) - should fix permissions using helper container
   mixed-volumes:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/mixed-bind:/usr/share/nginx/html
-      - test-mixed-volume:/var/cache/nginx
-      - test-mixed-run:/var/run
+      - ./volume_sources/mixed-bind:/data
+      - test-mixed-volume:/cache
+      - test-mixed-run:/run
 
   # Test case 17: File bind mounts (existing files) - should create parent directory and fix permissions
   file-bind-mount-existing:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/config/existing-nginx.conf:/etc/nginx/nginx.conf
-      - ./volume_sources/logs/existing-access.log:/var/log/nginx/access.log
-      - ./volume_sources/cache-existing:/var/cache/nginx
-      - ./volume_sources/run-existing:/var/run
+      - ./volume_sources/config/existing-nginx.conf:/app/config/app.conf
+      - ./volume_sources/logs/existing-access.log:/app/logs/access.log
+      - ./volume_sources/cache-existing:/cache
+      - ./volume_sources/run-existing:/run
 
   # Test case 18: File bind mounts (non-existing files) - should create parent directory and fix permissions
   file-bind-mount-nonexisting:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
       - ./volume_sources/config/new-custom.conf:/app/config/custom.conf
       - ./volume_sources/logs/new-app.log:/app/logs/app.log
-      - ./volume_sources/cache-nonexisting:/var/cache/nginx
-      - ./volume_sources/run-nonexisting:/var/run
+      - ./volume_sources/cache-nonexisting:/cache
+      - ./volume_sources/run-nonexisting:/run
 
   # Test case 19: Directory bind mounts - should create directory and fix permissions
   directory-bind-mount:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/html-dir:/usr/share/nginx/html
-      - ./volume_sources/logs-dir:/var/log/nginx
-      - ./volume_sources/cache-dir:/var/cache/nginx
-      - ./volume_sources/run-dir:/var/run
+      - ./volume_sources/html-dir:/data
+      - ./volume_sources/logs-dir:/logs
+      - ./volume_sources/cache-dir:/cache
+      - ./volume_sources/run-dir:/run
 
   # Test case 20: Multiple volumes per service - should fix permissions for all volumes
   multiple-volumes:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data1/log.txt; echo $(date) >> /data2/cache.txt; echo $(date) >> /data3/logs.txt; echo $(date) >> /multi/multi.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/multi-1:/usr/share/nginx/html
-      - ./volume_sources/multi-2:/var/cache/nginx
-      - ./volume_sources/multi-3:/var/log/nginx
-      - test-multi-named:/tmp/multi
-      - test-multi-run:/var/run
+      - ./volume_sources/multi-1:/data1
+      - ./volume_sources/multi-2:/data2
+      - ./volume_sources/multi-3:/data3
+      - test-multi-named:/multi
+      - test-multi-run:/run
 
   # Test case 21: User:group format - should fix permissions using both UID and GID
   user-group-format:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000:1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/user-group:/usr/share/nginx/html
-      - ./volume_sources/user-group-cache:/var/cache/nginx
-      - ./volume_sources/user-group-run:/var/run
+      - ./volume_sources/user-group:/data
+      - ./volume_sources/user-group-cache:/cache
+      - ./volume_sources/user-group-run:/run
 
   # Test case 22: Numeric user IDs - should fix permissions using numeric UID
   numeric-user:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1001"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/numeric-user:/usr/share/nginx/html
-      - ./volume_sources/numeric-cache:/var/cache/nginx
-      - ./volume_sources/numeric-run:/var/run
+      - ./volume_sources/numeric-user:/data
+      - ./volume_sources/numeric-cache:/cache
+      - ./volume_sources/numeric-run:/run
 
   # Test case 23: Complex volume paths - should handle nested directory creation
   complex-paths:
-    image: nginx:alpine
+    image: alpine:latest
     user: "1000"
+    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
     volumes:
-      - ./volume_sources/complex/nested/deep/path:/usr/share/nginx/html
+      - ./volume_sources/complex/nested/deep/path:/data
       - ./volume_sources/another/complex/structure/file.conf:/app/config/custom.conf
-      - ./volume_sources/complex-cache:/var/cache/nginx
-      - ./volume_sources/complex-run:/var/run
+      - ./volume_sources/complex-cache:/cache
+      - ./volume_sources/complex-run:/run
 
 # TODO: Make sure to clean up named volumes after tests
 volumes:
