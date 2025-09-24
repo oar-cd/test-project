@@ -16,3 +16,7 @@ services:
       interval: 1s
       timeout: 1s
       retries: 10
+
+  task:
+    image: alpine:latest
+    command: ["sh", "-c", "echo 'Task completed successfully'"]
