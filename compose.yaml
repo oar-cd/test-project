@@ -1,18 +1,26 @@
 services:
   web:
-    image: nginx:alpine
+    image: busybox:uclibc
     depends_on:
       - redis
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080"]
       interval: 1s
       timeout: 1s
       retries: 10
 
   redis:
-    image: redis:alpine
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8081"]
+    init: true
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8081"]
       interval: 1s
       timeout: 1s
       retries: 10
+
+  task:
+    image: busybox:uclibc
+    command: ["sh", "-c", "echo 'Task completed successfully'"]
