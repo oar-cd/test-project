@@ -4,8 +4,11 @@ services:
       file: compose.base.yaml
       service: app
     environment:
-      - NODE_ENV=development
-      - DEBUG=app:*
+      INFRA_ENV: development
+      DEBUG: true
+    init: true
 
   monitoring:
-    image: prom/prometheus:latest
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true

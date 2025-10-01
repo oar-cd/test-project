@@ -1,9 +1,12 @@
 services:
   app:
-    image: node:18-alpine
-    command: node -e "console.log('App running'); setInterval(() => {}, 1000)"
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
     environment:
-      - NODE_ENV=production
+      INFRA_ENV: production
+    init: true
 
   cache:
-    image: redis:alpine
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
