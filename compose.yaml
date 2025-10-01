@@ -1,14 +1,15 @@
 include:
-  - services/database.yaml
   - services/cache.yaml
+  - services/logging.yaml
 
 services:
   api:
-    image: python:3.11-slim
-    command: python -m http.server 8000
+    image: busybox:uclibc
     depends_on:
-      - postgres
+      - fluentbit
       - redis
     environment:
-      - DATABASE_URL=postgresql://appuser:apppass@postgres:5432/appdb
-      - REDIS_URL=redis://redis:6379
+      FLUENTBIT_PORT: 24224
+      REDIS_URL: redis://redis:6379
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true

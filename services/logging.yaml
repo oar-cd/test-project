@@ -1,5 +1,7 @@
 services:
-  redis:
+  fluentbit:
     image: busybox:uclibc
+    environment:
+      LISTEN_PORT: 24224
     command: ["httpd", "-f", "-p", "8080"]
     init: true
