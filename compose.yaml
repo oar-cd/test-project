@@ -1,8 +1,12 @@
 services:
   web:
-    image: nginx:alpine
+    image: busybox:uclibc
     environment:
-      - NGINX_ENV=production
+      NGINX_ENV: production
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
 
   redis:
-    image: redis:alpine
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true

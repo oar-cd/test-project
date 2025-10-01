@@ -1,12 +1,14 @@
 services:
   web:
     environment:
-      - NGINX_ENV=development
-      - DEBUG=true
+      NGINX_ENV: development
+      DEBUG: true
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
 
   db:
-    image: postgres:15-alpine
+    image: busybox:uclibc
     environment:
-      - POSTGRES_DB=testdb
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD=testpass
+      LISTEN_PORT: 24224
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
