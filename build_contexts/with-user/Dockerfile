@@ -1,7 +1,4 @@
-FROM alpine:latest
-
-# Install some basic tools for testing
-RUN apk add --no-cache curl
+FROM busybox:uclibc
 
 # Create a non-root user
 RUN addgroup -g 1001 testuser && \
@@ -15,4 +12,4 @@ RUN mkdir -p /data && \
 USER testuser
 
 # Default command
-CMD ["sh", "-c", "echo 'Container started as non-root user' && sleep 3600"]
+CMD ["sh", "-c", "while true; do date; sleep 0.1; done"]

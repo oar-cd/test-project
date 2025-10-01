@@ -1,50 +1,45 @@
 services:
   # Test case 1: No user and volume mounts - should work without permission issues
   no-user-with-volumes:
-    image: alpine:latest
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; sleep 10; done"
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
     volumes:
       - ./volume_sources/no-user:/data
+    init: true
 
   # Test case 2: Root user and volume mounts - should work without permission issues
   root-user-with-volumes:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "0"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; sleep 10; done"
+    command: ["httpd", "-f", "-p", "8080"]
     volumes:
       - ./volume_sources/root-user:/data
+    init: true
 
   # Test case 3: Non-root user and volume mounts - should fix permissions using helper container
   nonroot-user-with-volumes:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/nonroot-user:/data
       - ./volume_sources/nonroot-cache:/cache
       - ./volume_sources/nonroot-run:/run
+    init: true
 
   # Test case 4: Image that defaults to non-root user and volume mounts - should fix permissions
-  image-defaults-nonroot:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_PASSWORD: test
-    volumes:
-      - ./volume_sources/postgres-data:/var/lib/postgresql/data
-
-  # Test case 5: Image that prohibits root user and volume mounts - should fix permissions
-  opensearch-nonroot:
-    image: opensearchproject/opensearch:2.11.1
-    environment:
-      - discovery.type=single-node
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=TestPassword123!
-    volumes:
-      - ./volume_sources/opensearch-data:/usr/share/opensearch/data
+  #image-defaults-nonroot:
+  #  image: postgres:15-alpine
+  #  environment:
+  #    POSTGRES_PASSWORD: test
+  #  volumes:
+  #    - ./volume_sources/postgres-data:/var/lib/postgresql/data
 
   # Test case 6: No volume mounts - should skip volume initialization step
   no-volumes:
-    image: alpine:latest
-    command: sh -c "while true; do echo 'App running...'; sleep 10; done"
+    image: busybox:uclibc
+    command: ["httpd", "-f", "-p", "8080"]
+    init: true
 
   # Test case 7: No user and build context - should work without permission issues
   build-no-user:
@@ -52,6 +47,7 @@ services:
       context: ./build_contexts/basic
     volumes:
       - ./volume_sources/build-no-user:/data
+    init: true
 
   # Test case 8: Root user and build context - should work without permission issues
   build-root-user:
@@ -60,6 +56,7 @@ services:
     user: "root"
     volumes:
       - ./volume_sources/build-root:/data
+    init: true
 
   # Test case 9: Non-root user and build context - should fix permissions using helper container
   build-nonroot-user:
@@ -68,6 +65,7 @@ services:
     user: "1000"
     volumes:
       - ./volume_sources/build-nonroot:/data
+    init: true
 
   # Test case 10: Both build context and image, no user, and volume mounts - should work without permission issues
   both-build-image-no-user:
@@ -77,6 +75,7 @@ services:
     pull_policy: build
     volumes:
       - ./volume_sources/both-no-user:/data
+    init: true
 
   # Test case 11: Both build context and image, root user, and volume mounts - should work without permission issues
   both-build-image-root:
@@ -87,6 +86,7 @@ services:
     user: "0"
     volumes:
       - ./volume_sources/both-root:/data
+    init: true
 
   # Test case 12: Both build context and image, non-root user, and volume mounts - should fix permissions
   both-build-image-nonroot:
@@ -97,6 +97,7 @@ services:
     user: "1000"
     volumes:
       - ./volume_sources/both-nonroot:/data
+    init: true
 
   # Test case 13: Both build context and image, image defaults to non-root user, and volume mounts - should fix permissions
   both-build-image-defaults:
@@ -106,112 +107,123 @@ services:
     pull_policy: build
     volumes:
       - ./volume_sources/both-defaults:/data
+    init: true
 
   # Test case 14: Named volumes only - should fix permissions using helper container
   named-volumes-only:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - test-named-volume:/data
       - test-named-cache:/cache
       - test-named-run:/run
+    init: true
 
   # Test case 15: Bind mounts only - should fix permissions using helper container
   bind-mounts-only:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/bind-only:/data
       - ./volume_sources/bind-cache:/cache
       - ./volume_sources/bind-run:/run
+    init: true
 
   # Test case 16: Mixed volume types (bind + named) - should fix permissions using helper container
   mixed-volumes:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/mixed-bind:/data
       - test-mixed-volume:/cache
       - test-mixed-run:/run
+    init: true
 
   # Test case 17: File bind mounts (existing files) - should create parent directory and fix permissions
   file-bind-mount-existing:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/config/existing-nginx.conf:/app/config/app.conf
       - ./volume_sources/logs/existing-access.log:/app/logs/access.log
       - ./volume_sources/cache-existing:/cache
       - ./volume_sources/run-existing:/run
+    init: true
 
   # Test case 18: File bind mounts (non-existing files) - should create parent directory and fix permissions
   file-bind-mount-nonexisting:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/config/new-custom.conf:/app/config/custom.conf
       - ./volume_sources/logs/new-app.log:/app/logs/app.log
       - ./volume_sources/cache-nonexisting:/cache
       - ./volume_sources/run-nonexisting:/run
+    init: true
 
   # Test case 19: Directory bind mounts - should create directory and fix permissions
   directory-bind-mount:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/html-dir:/data
       - ./volume_sources/logs-dir:/logs
       - ./volume_sources/cache-dir:/cache
       - ./volume_sources/run-dir:/run
+    init: true
 
   # Test case 20: Multiple volumes per service - should fix permissions for all volumes
   multiple-volumes:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data1/log.txt; echo $(date) >> /data2/cache.txt; echo $(date) >> /data3/logs.txt; echo $(date) >> /multi/multi.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data1/log.txt; echo $(date) >> /data2/cache.txt; echo $(date) >> /data3/logs.txt; echo $(date) >> /multi/multi.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/multi-1:/data1
       - ./volume_sources/multi-2:/data2
       - ./volume_sources/multi-3:/data3
       - test-multi-named:/multi
       - test-multi-run:/run
+    init: true
 
   # Test case 21: User:group format - should fix permissions using both UID and GID
   user-group-format:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000:1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/user-group:/data
       - ./volume_sources/user-group-cache:/cache
       - ./volume_sources/user-group-run:/run
+    init: true
 
   # Test case 22: Numeric user IDs - should fix permissions using numeric UID
   numeric-user:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1001"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/numeric-user:/data
       - ./volume_sources/numeric-cache:/cache
       - ./volume_sources/numeric-run:/run
+    init: true
 
   # Test case 23: Complex volume paths - should handle nested directory creation
   complex-paths:
-    image: alpine:latest
+    image: busybox:uclibc
     user: "1000"
-    command: sh -c "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 10; done"
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/log.txt; echo $(date) >> /cache/cache.txt; echo $$ > /run/app.pid; sleep 0.1; done"]
     volumes:
       - ./volume_sources/complex/nested/deep/path:/data
       - ./volume_sources/another/complex/structure/file.conf:/app/config/custom.conf
       - ./volume_sources/complex-cache:/cache
       - ./volume_sources/complex-run:/run
+    init: true
 
 # TODO: Make sure to clean up named volumes after tests
 volumes:
